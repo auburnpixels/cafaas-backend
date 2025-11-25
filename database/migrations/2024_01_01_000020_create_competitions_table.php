@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('status')->default('unpublished')->index();
             $table->integer('ticket_quantity')->nullable();
+            $table->timestamp('draw_at')->nullable();
             $table->timestamps();
 
             $table->index(['operator_id', 'external_id']);
