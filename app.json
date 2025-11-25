@@ -6,8 +6,6 @@
         }
     ],
     "scripts": {
-        "dokku": {
-            "postdeploy": "php artisan sitemap:generate"
-        }
+        "dokku": {}
     }
 }
