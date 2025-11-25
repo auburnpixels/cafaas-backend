@@ -21,7 +21,7 @@ final class DrawAuditController extends Controller
     public function indexJson(): JsonResponse
     {
         $audits = CompetitionDrawAudit::with([
-            'competition:id,title,slug',
+            'competition:id,name,slug',
             'prize:id,name',
             'winningTicket:id,number',
         ])
@@ -35,7 +35,7 @@ final class DrawAuditController extends Controller
                 'draw_id' => $audit->draw_id,
                 'competition' => $audit->competition ? [
                     'id' => $audit->competition->id,
-                    'title' => $audit->competition->title,
+                    'name' => $audit->competition->name,
                     'slug' => $audit->competition->slug,
                 ] : null,
                 'prize_name' => $audit->prize?->name,
@@ -66,7 +66,7 @@ final class DrawAuditController extends Controller
     public function index(): View
     {
         $audits = CompetitionDrawAudit::with([
-            'competition:id,title,slug,uuid',
+            'competition:id,name,slug,uuid',
             'prize:id,competition_id,name',
             'winningTicket:id,number',
         ])
@@ -88,14 +88,14 @@ final class DrawAuditController extends Controller
                 $query->where('uuid', $uuid);
             })
             ->with([
-                'competition:id,title,slug,uuid',
+                'competition:id,name,slug,uuid',
                 'prize:id,competition_id,name',
                 'winningTicket:id,number',
             ])
             ->orderBy('id', 'desc')
             ->paginate(25);
 
-        // Get competition info for the page title (may be null if competition doesn't exist in Raffaly)
+        // Get competition info for the page name (may be null if competition doesn't exist in Raffaly)
         $competition = $audits->first()?->competition;
 
         return view('draws-audit.show', [
@@ -115,7 +115,7 @@ final class DrawAuditController extends Controller
                 $query->where('uuid', $uuid);
             })
             ->with([
-                'competition:id,title,slug,uuid',
+                'competition:id,name,slug,uuid',
                 'prize:id,competition_id,name',
                 'winningTicket:id,number',
             ])
@@ -129,7 +129,7 @@ final class DrawAuditController extends Controller
                 'draw_id' => $audit->draw_id,
                 'competition' => $audit->competition ? [
                     'id' => $audit->competition->id,
-                    'title' => $audit->competition->title,
+                    'name' => $audit->competition->name,
                     'slug' => $audit->competition->slug,
                     'uuid' => $audit->competition->uuid,
                 ] : null,
@@ -162,7 +162,7 @@ final class DrawAuditController extends Controller
     public function publicIndex(Request $request): JsonResponse
     {
         $query = CompetitionDrawAudit::with([
-            'competition:id,uuid,title,slug,operator_id',
+            'competition:id,uuid,name,slug,operator_id',
             'competition.operator:id,uuid,name,slug,url',
             'prize:id,name',
             'winningTicket:id,number',
@@ -193,7 +193,7 @@ final class DrawAuditController extends Controller
                 ] : null,
                 'competition' => $audit->competition ? [
                     'uuid' => $audit->competition->uuid,
-                    'title' => $audit->competition->title,
+                    'name' => $audit->competition->name,
                     'slug' => $audit->competition->slug,
                 ] : null,
                 'prize_name' => $audit->prize?->name,
@@ -223,7 +223,7 @@ final class DrawAuditController extends Controller
     public function downloadJson(Request $request): JsonResponse
     {
         $query = CompetitionDrawAudit::with([
-            'competition:id,uuid,title,slug,operator_id',
+            'competition:id,uuid,name,slug,operator_id',
             'competition.operator:id,uuid,name,slug,url',
             'prize:id,name',
             'winningTicket:id,number',
@@ -253,7 +253,7 @@ final class DrawAuditController extends Controller
                 ] : null,
                 'competition' => $audit->competition ? [
                     'uuid' => $audit->competition->uuid,
-                    'title' => $audit->competition->title,
+                    'name' => $audit->competition->name,
                     'slug' => $audit->competition->slug,
                 ] : null,
                 'prize_name' => $audit->prize?->name,

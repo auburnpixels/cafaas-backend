@@ -269,7 +269,7 @@ final class DrawOrchestrationService
             'competition_id' => $competition->external_id ?? $competition->id,
             'competition_uuid' => $competition->id,
             'prize_id' => $prize->external_id,
-            'prize_title' => $prize->title,
+            'prize_name' => $prize->name,
             'draw_id' => $audit->draw_id,
             'winner_entry_id' => $winningTicket->external_id ?? $winningTicket->id ?? null,
             'winner_ticket_number' => $winningTicket->number ?? null,

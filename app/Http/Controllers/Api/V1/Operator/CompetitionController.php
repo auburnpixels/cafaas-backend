@@ -44,12 +44,12 @@ final class CompetitionController extends Controller
         $competition = \DB::transaction(function () use ($operator, $validated) {
             // Create competition
             $competition = Competition::create([
-                'operator_id' => $operator->id,
-                'external_id' => $validated['external_id'],
                 'uuid' => Str::uuid(),
-                'title' => $validated['name'],
-                'ticket_quantity' => $validated['max_tickets'],
+                'name' => $validated['name'],
+                'operator_id' => $operator->id,
                 'draw_at' => $validated['draw_at'],
+                'external_id' => $validated['external_id'],
+                'ticket_quantity' => $validated['max_tickets'],
                 'status' => $validated['status'] ?? Competition::STATUS_UNPUBLISHED,
             ]);
 
@@ -57,8 +57,8 @@ final class CompetitionController extends Controller
             foreach ($validated['prizes'] as $index => $prizeData) {
                 $prize = $competition->prizes()->create([
                     'uuid' => Str::uuid(),
-                    'title' => $prizeData['title'],
                     'draw_order' => $index + 1,
+                    'name' => $prizeData['name'],
                     'external_id' => $prizeData['external_id'],
                 ]);
 
@@ -331,9 +331,9 @@ final class CompetitionController extends Controller
             $updateData['external_id'] = $validated['external_id'];
         }
 
-        if (isset($validated['name']) && $validated['name'] !== $competition->title) {
-            $changes['title'] = ['old' => $competition->title, 'new' => $validated['name']];
-            $updateData['title'] = $validated['name'];
+        if (isset($validated['name']) && $validated['name'] !== $competition->name) {
+            $changes['name'] = ['old' => $competition->name, 'new' => $validated['name']];
+            $updateData['name'] = $validated['name'];
         }
 
         if (isset($validated['max_tickets']) && $validated['max_tickets'] !== $competition->ticket_quantity) {
@@ -392,9 +392,9 @@ final class CompetitionController extends Controller
                         $prize = $existingPrizes->get($externalPrizeId);
                         $prizeUpdates = [];
 
-                        if ($prize->title !== $prizeData['title']) {
-                            $prizeUpdates['title'] = $prizeData['title'];
-                            $prizeChanges[] = ['action' => 'updated', 'prize_id' => $externalPrizeId, 'title' => $prizeData['title']];
+                        if ($prize->name !== $prizeData['name']) {
+                            $prizeUpdates['name'] = $prizeData['name'];
+                            $prizeChanges[] = ['action' => 'updated', 'prize_id' => $externalPrizeId, 'name' => $prizeData['name']];
                         }
 
                         if ($prize->draw_order !== ($index + 1)) {
@@ -409,11 +409,11 @@ final class CompetitionController extends Controller
                         // Create new prize
                         $prize = $competition->prizes()->create([
                             'uuid' => Str::uuid(),
-                            'external_id' => $externalPrizeId,
-                            'title' => $prizeData['title'],
                             'draw_order' => $index + 1,
+                            'name' => $prizeData['name'],
+                            'external_id' => $externalPrizeId,
                         ]);
-                        $prizeChanges[] = ['action' => 'created', 'prize_id' => $externalPrizeId, 'title' => $prizeData['title']];
+                        $prizeChanges[] = ['action' => 'created', 'prize_id' => $externalPrizeId, 'name' => $prizeData['name']];
                         $this->drawEventService->logPrizeCreated($competition, $prize, $operator);
                     }
                 }

@@ -209,7 +209,7 @@ final class ComplianceService
 
         return [
             'competition_uuid' => $competition->id,
-            'competition_title' => $competition->title,
+            'competition_name' => $competition->name,
             'status' => $competition->status,
             'total_entries' => $totalEntries,
             'total_draws' => $drawAudits,
@@ -340,7 +340,7 @@ final class ComplianceService
                 'raffle_id' => $competition->id,
                 'raffle_id_short' => substr($competition->id, 0, 8),
                 'external_id' => $competition->external_id,
-                'title' => $competition->title ?? $competition->name ?? 'Untitled',
+                'name' => $competition->name ?? $competition->name ?? 'Unnamed',
                 'status' => $competition->status,
                 'total_entries' => $totalEntries,
                 'postal_entries' => $postalEntries,
@@ -437,7 +437,7 @@ final class ComplianceService
                 'raffle_id' => $competition->id,
                 'raffle_id_short' => substr($competition->id, 0, 8),
                 'external_id' => $competition->external_id,
-                'title' => $competition->title ?? $competition->name ?? 'Untitled',
+                'name' => $competition->name ?? $competition->name ?? 'Unnamed',
                 'status' => $competition->status,
                 'total_entries' => $totalEntries,
                 'postal_entries' => $postalEntries,

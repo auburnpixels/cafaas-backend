@@ -22,7 +22,7 @@ final class CompetitionResource extends JsonResource
 
         return [
             'id' => $this->resource->id,
-            'name' => $this->resource->title,
+            'name' => $this->resource->name,
             'status' => $this->resource->status,
             'external_id' => $this->resource->external_id,
             'max_tickets' => $this->resource->ticket_quantity,

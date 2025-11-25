@@ -50,7 +50,7 @@ final class Competition extends Model
      * @var string[]
      */
     protected $fillable = [
-        'title',
+        'name',
         'external_id',
         'status',
         'draw_at',

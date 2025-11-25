@@ -14,7 +14,7 @@ use Illuminate\Support\Str;
  * @class Prize
  *
  * Represents a prize within a competition
- * 
+ *
  * Uses soft deletes to maintain referential integrity with draw_events
  * and preserve the complete audit trail for integrity verification.
  */
@@ -43,7 +43,7 @@ final class Prize extends Model
     protected $fillable = [
         'competition_id',
         'external_id',
-        'title',
+        'name',
         'draw_order',
     ];
 

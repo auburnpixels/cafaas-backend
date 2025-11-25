@@ -130,9 +130,9 @@ final class DashboardController extends Controller
             $query->where('external_id', 'LIKE', '%' . $request->input('external_id') . '%');
         }
 
-        // Filter by name/title
+        // Filter by name/name
         if ($request->filled('name')) {
-            $query->where('title', 'LIKE', '%' . $request->input('name') . '%');
+            $query->where('name', 'LIKE', '%' . $request->input('name') . '%');
         }
 
         // Filter by status
@@ -338,7 +338,7 @@ final class DashboardController extends Controller
         $perPage = min((int) $request->input('per_page', 25), 250);
 
         $query = DrawEvent::where('operator_id', $user->operator_id)
-            ->with('competition:id,title,external_id');
+            ->with('competition:id,name,external_id');
 
         // Apply filters
         if ($request->filled('event_type')) {
@@ -384,7 +384,7 @@ final class DashboardController extends Controller
                     'is_chained' => $event->is_chained,
                     'competition' => $event->competition ? [
                         'id' => $event->competition->id,
-                        'title' => $event->competition->title,
+                        'name' => $event->competition->name,
                         'external_id' => $event->competition->external_id,
                     ] : null,
                 ];
@@ -420,8 +420,8 @@ final class DashboardController extends Controller
 
         // Get competitions
         $competitions = Competition::where('operator_id', $user->operator_id)
-            ->select('id', 'title', 'external_id')
-            ->orderBy('title')
+            ->select('id', 'name', 'external_id')
+            ->orderBy('name')
             ->get();
 
         return response()->json([
@@ -444,7 +444,7 @@ final class DashboardController extends Controller
         }
 
         $query = Complaint::where('operator_id', $user->operator_id)
-            ->with('competition:id,title,external_id');
+            ->with('competition:id,name,external_id');
 
         // Filter by status if provided
         if ($request->filled('status')) {
@@ -463,7 +463,7 @@ final class DashboardController extends Controller
         $data = $complaints->getCollection()->map(function ($complaint) {
             return [
                 'id' => $complaint->id,
-                'competition' => $complaint->competition ? $complaint->competition->title : null,
+                'competition' => $complaint->competition ? $complaint->competition->name : null,
                 'competition_id' => $complaint->competition ? $complaint->competition->id : null,
                 'external_id' => $complaint->competition ? $complaint->competition->external_id : null,
                 'reporter_name' => $complaint->name ?? 'Anonymous',
@@ -502,8 +502,8 @@ final class DashboardController extends Controller
 
         $query = DrawAudit::where('operator_id', $user->operator_id)
             ->with([
-                'competition:id,title,external_id',
-                'prize:id,title',
+                'competition:id,name,external_id',
+                'prize:id,name',
                 'winningTicket:id,external_id,number'
             ]);
 
@@ -531,12 +531,12 @@ final class DashboardController extends Controller
                 'sequence' => $audit->sequence,
                 'competition' => $audit->competition ? [
                     'id' => $audit->competition->id,
-                    'title' => $audit->competition->title,
+                    'name' => $audit->competition->name,
                     'external_id' => $audit->competition->external_id,
                 ] : null,
                 'prize' => $audit->prize ? [
                     'id' => $audit->prize->id,
-                    'title' => $audit->prize->title,
+                    'name' => $audit->prize->name,
                 ] : null,
                 'draw_id' => $audit->draw_id,
                 'drawn_at_utc' => $audit->drawn_at_utc->toIso8601String(),

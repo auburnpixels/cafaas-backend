@@ -15,14 +15,13 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->foreignUuid('operator_id')->nullable()->index()->constrained('operators')->onDelete('set null');
             $table->string('external_id')->nullable()->unique();
-            $table->string('title');
+            $table->string('name');
             $table->string('status')->default('unpublished')->index();
             $table->integer('ticket_quantity')->nullable();
-            $table->timestamp('draw_at')->nullable();
             $table->timestamps();
 
             $table->index(['operator_id', 'external_id']);
-            $table->index(['status', 'draw_at']);
+            $table->index(['status']);
         });
     }
 

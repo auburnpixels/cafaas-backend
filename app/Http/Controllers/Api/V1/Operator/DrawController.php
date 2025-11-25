@@ -69,7 +69,7 @@ final class DrawController extends Controller
 
             // Check if all prizes have been drawn
             $remainingUndrawnPrizes = $competition->prizes()->undrawn()->count();
-            
+
             // Update competition status to completed if all prizes are drawn
             if ($remainingUndrawnPrizes === 0) {
                 $competition->update(['status' => Competition::STATUS_COMPLETED]);
@@ -110,7 +110,7 @@ final class DrawController extends Controller
         // Fetch all draw events for this operator, ordered by sequence descending (latest first)
         // This ensures the hash chain is visible (each event's hash should match the next event's previous_hash)
         $events = DrawEvent::where('operator_id', $operator->id)
-            ->with('competition:id,uuid,title,external_id')
+            ->with('competition:id,uuid,name,external_id')
             ->orderBy('sequence', 'desc')
             ->limit(100)
             ->get();
@@ -130,7 +130,7 @@ final class DrawController extends Controller
                     'created_at' => $event->created_at->toIso8601String(),
                     'competition' => $event->competition ? [
                         'uuid' => $event->competition->uuid,
-                        'title' => $event->competition->title,
+                        'name' => $event->competition->name,
                         'external_id' => $event->competition->external_id,
                     ] : null,
                 ];

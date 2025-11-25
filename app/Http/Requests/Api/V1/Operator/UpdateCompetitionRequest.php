@@ -41,7 +41,7 @@ final class UpdateCompetitionRequest extends FormRequest
             'status' => 'sometimes|in:pending,active,ended,closed,awaiting_draw,completed',
             'prizes' => 'sometimes|array|min:1',
             'prizes.*.external_id' => 'required_with:prizes|string|max:255',
-            'prizes.*.title' => 'required_with:prizes|string|max:255',
+            'prizes.*.name' => 'required_with:prizes|string|max:255',
         ];
     }
 
@@ -63,7 +63,7 @@ final class UpdateCompetitionRequest extends FormRequest
             'prizes.array' => 'Prizes must be an array.',
             'prizes.min' => 'At least one prize is required.',
             'prizes.*.external_id.required_with' => 'Each prize must have an external prize ID.',
-            'prizes.*.title.required_with' => 'Each prize must have a title.',
+            'prizes.*.name.required_with' => 'Each prize must have a name.',
         ];
     }
 

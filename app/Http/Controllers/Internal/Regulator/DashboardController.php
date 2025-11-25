@@ -125,7 +125,7 @@ final class DashboardController extends Controller
         return [
             'competition' => [
                 'uuid' => $competition->id,
-                'name' => $competition->name ?? $competition->title,
+                'name' => $competition->name ?? $competition->name,
             ],
             'integrity_check' => [
                 'overall_status' => ($eventIntegrity['valid'] && $auditIntegrity['valid']) ? 'VALID' : 'INVALID',

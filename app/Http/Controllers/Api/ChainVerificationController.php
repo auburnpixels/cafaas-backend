@@ -112,7 +112,7 @@ final class ChainVerificationController extends Controller
             'competition' => [
                 'id' => $competition->id,
                 'external_id' => $competition->external_id,
-                'title' => $competition->title,
+                'name' => $competition->name,
             ],
             'chain_status' => $results['is_valid'] ? 'valid' : 'invalid',
             'summary' => [
@@ -193,7 +193,7 @@ final class ChainVerificationController extends Controller
             'competition' => [
                 'id' => $competition->id,
                 'external_id' => $competition->external_id,
-                'title' => $competition->title,
+                'name' => $competition->name,
                 'operator_id' => $competition->operator_id,
             ],
             'chain_status' => $results['is_valid'] ? 'valid' : 'invalid',

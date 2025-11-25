@@ -33,7 +33,7 @@ final class StoreCompetitionRequest extends FormRequest
             'status' => 'nullable|in:pending,active,ended',
             'prizes' => 'required|array|min:1',
             'prizes.*.external_id' => 'required|string|max:255',
-            'prizes.*.title' => 'required|string|max:255',
+            'prizes.*.name' => 'required|string|max:255',
         ];
     }
 
@@ -54,7 +54,7 @@ final class StoreCompetitionRequest extends FormRequest
             'prizes.required' => 'At least one prize is required.',
             'prizes.min' => 'At least one prize is required.',
             'prizes.*.external_id.required' => 'Each prize must have an external prize ID.',
-            'prizes.*.title.required' => 'Each prize must have a title.',
+            'prizes.*.name.required' => 'Each prize must have a name.',
         ];
     }
 

@@ -20,7 +20,7 @@ class CompetitionRepository
                 'slug',
                 'affiliate_commission',
                 'id',
-                'title',
+                'name',
                 'type',
                 'draw_at',
                 'status',

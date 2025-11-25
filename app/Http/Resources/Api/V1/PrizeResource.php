@@ -23,7 +23,7 @@ final class PrizeResource extends JsonResource
         return [
             'id' => $this->resource->id,
             'external_id' => $this->resource->external_id,
-            'title' => $this->resource->title,
+            'name' => $this->resource->name,
             'winner' => [
                 'entry' => [
                     'external_id' => $hasBeenDrawn && $audit ? ($audit->winningTicket?->external_id) : null

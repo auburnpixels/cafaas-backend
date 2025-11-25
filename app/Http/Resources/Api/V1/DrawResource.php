@@ -29,7 +29,7 @@ final class DrawResource extends JsonResource
             'prize' => [
                 'id' => $prize->id,
                 'external_id' => $prize->external_id,
-                'title' => $prize->title,
+                'name' => $prize->name,
             ],
             'winner' => [
                 'entry' => [
