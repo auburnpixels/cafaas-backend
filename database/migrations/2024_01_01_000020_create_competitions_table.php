@@ -21,7 +21,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['operator_id', 'external_id']);
-            $table->index(['status']);
+            $table->index(['status', 'draw_at']);
         });
     }
 
