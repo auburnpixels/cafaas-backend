@@ -14,7 +14,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Push to `Cafaas Backend`
+      - name: Push to `backend`
         uses: dokku/github-action@master
         with:
           git_remote_url: 'ssh://dokku@157.180.113.27:22/backend'
