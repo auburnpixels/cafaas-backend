@@ -202,58 +202,6 @@ final class CompetitionController extends Controller
     }
 
     /**
-     * Publish a competition (make it active).
-     */
-    public function publish(PublishCompetitionRequest $request, string $externalId): JsonResponse
-    {
-        $operator = $request->operator;
-
-        $competition = Competition::where('operator_id', $operator->id)
-            ->where('external_id', $externalId)
-            ->first();
-
-        if (! $competition) {
-            return response()->json([
-                'error' => [
-                    'code' => 'COMPETITION_NOT_FOUND',
-                    'message' => 'Competition not found.',
-                ],
-            ], 404);
-        }
-
-        // Check if competition can be published
-        if ($competition->status === Competition::STATUS_ACTIVE) {
-            return response()->json([
-                'error' => [
-                    'code' => 'ALREADY_PUBLISHED',
-                    'message' => 'Competition is already published.',
-                ],
-            ], 422);
-        }
-
-        if (in_array($competition->status, [Competition::STATUS_AWAITING_DRAW, Competition::STATUS_COMPLETED])) {
-            return response()->json([
-                'error' => [
-                    'code' => 'INVALID_STATUS',
-                    'message' => 'Cannot publish a competition that is awaiting draw or completed.',
-                ],
-            ], 422);
-        }
-
-        // Update status
-        $competition->update(['status' => Competition::STATUS_ACTIVE]);
-
-        // Log event
-        $this->drawEventService->logRafflePublished($competition);
-
-        // Load prizes for response
-        $competition->load('prizes');
-
-        return (new CompetitionResource($competition))
-            ->response();
-    }
-
-    /**
      * Close a competition (end entry period).
      */
     public function close(CloseCompetitionRequest $request, string $externalId): JsonResponse

@@ -251,6 +251,7 @@ final class DrawOrchestrationService
             'selected_entry_id' => $winningTicket->id ?? null,
             'signature_hash' => $signature,
             'previous_signature_hash' => $previousSignature,
+            'operator_id' => $competition->operator->id
         ]);
 
         return $audit;

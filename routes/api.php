@@ -8,21 +8,7 @@ use App\Http\Controllers\Api\V1\Operator\WebhookController;
 use App\Http\Controllers\Api\ChainVerificationController;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| CaaS Platform API Routes
-|--------------------------------------------------------------------------
-|
-| This file contains all CaaS platform-specific API routes:
-| - Operator External API (API key authentication)
-| - Internal Dashboard API (JWT authentication)
-| - Public read-only API (no authentication)
-|
-*/
-
-// ============================================================================
-// OPERATOR EXTERNAL API (v1)
-// ============================================================================
+// Operator External API (v1)
 Route::middleware(['api', 'api.key'])
     ->prefix('api/v1/operator')
     ->name('api.v1.operator.')
@@ -32,7 +18,6 @@ Route::middleware(['api', 'api.key'])
         Route::post('/competitions', [CompetitionController::class, 'store'])->name('competitions.store');
         Route::get('/competitions/{externalId}', [CompetitionController::class, 'show'])->name('competitions.show');
         Route::put('/competitions/{externalId}', [CompetitionController::class, 'update'])->name('competitions.update');
-        // Route::post('/competitions/{externalId}/publish', [CompetitionController::class, 'publish'])->name('competitions.publish');
         Route::post('/competitions/{externalId}/close', [CompetitionController::class, 'close'])->name('competitions.close');
         Route::get('/competitions/{externalId}/audits', [DrawController::class, 'getAudits'])->name('competitions.audits');
         Route::get('/competitions/{externalId}/stats', [CompetitionController::class, 'stats'])->name('competitions.stats');
@@ -58,14 +43,10 @@ Route::middleware(['api', 'api.key'])
         Route::get('/competitions/{externalId}/chain/verify', [ChainVerificationController::class, 'verifyCompetitionOperator'])->name('competitions.chain.verify');
     });
 
-// ============================================================================
-// INTERNAL DASHBOARD API
-// ============================================================================
+// Internal Dashboard API
 require_once __DIR__.'/internal.php';
 
-// ============================================================================
-// PUBLIC API (No authentication required)
-// ============================================================================
+// Public API (No authentication required)
 Route::prefix('api/public')->name('api.public.')->group(function () {
     // Public draw audits
     Route::get('/draw-audits', [App\Http\Controllers\DrawAuditController::class, 'publicIndex'])->name('draw-audits.index');
