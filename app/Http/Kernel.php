@@ -3,8 +3,6 @@
 namespace App\Http;
 
 use App\Http\Middleware\AppSpecific;
-use App\Http\Middleware\EnsurePhoneVerified;
-use App\Http\Middleware\SetLocation;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
 class Kernel extends HttpKernel
@@ -40,8 +38,6 @@ class Kernel extends HttpKernel
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
-            \App\Http\Middleware\CustomDomain::class,
-            SetLocation::class,
         ],
 
         'api' => [
@@ -67,13 +63,11 @@ class Kernel extends HttpKernel
         'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
         'cache.headers' => \Illuminate\Http\Middleware\SetCacheHeaders::class,
         'can' => \Illuminate\Auth\Middleware\Authorize::class,
-        'domain' => \App\Http\Middleware\CustomDomain::class,
         'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
         'password.confirm' => \Illuminate\Auth\Middleware\RequirePassword::class,
         'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
-        'verified.phone' => EnsurePhoneVerified::class,
         'app' => AppSpecific::class,
         'api.version' => \App\Http\Middleware\Api\ValidateApiVersion::class,
         'api.headers' => \App\Http\Middleware\Api\AddApiHeaders::class,
