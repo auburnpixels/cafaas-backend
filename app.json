@@ -1,0 +1,13 @@
+{
+    "cron": [
+        {
+            "command": "php artisan schedule:run >> /dev/null 2>&1",
+            "schedule": "* * * * *"
+        }
+    ],
+    "scripts": {
+        "dokku": {
+            "postdeploy": "php artisan sitemap:generate"
+        }
+    }
+}

@@ -1,0 +1,400 @@
+# Raffaly Platform - Cursor AI Rules
+
+## Project Overview
+
+Raffaly is a white-label online raffle/competition platform that enables users to host and enter raffles with integrated payment processing, automated drawing, and prize fulfillment.
+
+**Core Business Model:**
+- Hosts create competitions/raffles with prizes
+- Users purchase tickets to enter
+- Automated drawing selects winners
+- Platform handles payments, compliance, and notifications
+
+## Tech Stack
+
+**Backend:**
+- Laravel 12.36.1 (PHP 8.2+)
+- MySQL database
+- Redis for queues and caching
+- Laravel Horizon for queue management
+- Laravel Telescope for debugging
+
+**Frontend:**
+- Vue 3 with Composition API
+- Tailwind CSS 3
+- Livewire components
+- Laravel Mix (Webpack)
+- Alpine.js for simple interactions
+
+**Infrastructure:**
+- Docker containers
+- Kubernetes deployments
+- AWS S3 for file storage
+- Postmark for transactional emails
+
+## Architecture
+
+### Design Patterns
+
+1. **Service Layer Pattern**
+   - Business logic lives in `app/Http/Services/`
+   - Controllers are thin, delegating to services
+   - Services are injected via constructor
+
+2. **Repository Pattern**
+   - Complex queries in `app/Repositories/`
+   - Keeps controllers and services clean
+
+3. **Event-Driven Architecture**
+   - Events in `app/Events/`
+   - Listeners in `app/Listeners/`
+   - Used for side effects (emails, notifications, webhooks)
+
+4. **Policy-Based Authorization**
+   - All authorization in `app/Policies/`
+   - Use `$this->authorize()` in controllers
+
+### Key Directory Structure
+
+```
+app/
+├── Console/Commands/     - Artisan commands (draws, payouts, cleanup)
+├── Events/              - Domain events (CompetitionDrawn, PrizeAccepted, etc)
+├── Http/
+│   ├── Controllers/     - Request handling (thin, delegate to services)
+│   ├── Middleware/      - Request filtering
+│   ├── Requests/        - Form validation classes
+│   └── Services/        - Business logic layer
+├── Jobs/                - Queued tasks
+├── Listeners/           - Event handlers
+├── Mail/                - Mailable classes
+├── Models/              - Eloquent models
+├── Notifications/       - User notifications
+├── Policies/            - Authorization logic
+└── Rules/               - Custom validation rules
+```
+
+## Business Domains
+
+### 1. Competition Types
+
+**Traditional Raffles:**
+- Standard ticket-based competitions
+- Fixed ticket price per entry
+- Draw date can be scheduled or automatic (when sold out)
+- Multiple prize tiers (1st, 2nd, 3rd place)
+
+**Access Raffles:**
+- Direct purchase of prize access
+- Time-limited access links
+- Fixed shipping costs per country
+- Immediate payment required
+
+**Daily Drops:**
+- Free daily prize draws
+- One entry per user per drop
+- Automated daily drawing at midnight
+- Email-based entry (no login required initially)
+
+### 2. Key Models & Relationships
+
+**Competition** (`competitions` table)
+- Status: pending, review, active, awaiting_draw, ended, rejected
+- Type: traditional, access, drop
+- Relationships: user (host), prizes, tickets, discount, brand, charity
+
+**Ticket** (`tickets` table)
+- Belongs to: competition, user (can be null), checkout
+- Has answer (if competition has question)
+- Winning ticket marked via competition relationship
+
+**Checkout** (`checkouts` table)
+- Temporary session for ticket purchase
+- Links tickets before payment completion
+- Has expiry time (configurable)
+- Stores payment provider response in `axcess` JSON column
+
+**User** (`users` table)
+- Can be host (creates competitions) or entrant (buys tickets)
+- Commission rate for earnings
+- Email verification required for hosting
+- Phone verification required for hosting
+
+**Prize** (`prizes` table)
+- Belongs to competition
+- Can be accepted/disputed by winner
+- Tracks shipment status
+- Multiple images per prize
+
+**AccessLink** (`access_links` table)
+- Direct purchase links for prizes
+- Time-limited (expiry_at)
+- Status: awaiting_payment, paid, expired
+- Stores Axcess payment response
+
+**Discount** (`discounts` table)
+- Types: per_ticket, batch_ticket, checkout_total
+- Units: amount_off, percent_off
+- Ticket type conditions: equal, equal_or_more_than_with_rolling, equal_or_more_than_without_rolling
+
+### 3. Payment Flow
+
+**Checkout Process:**
+1. User selects tickets → creates Checkout
+2. Checkout/process → loads Axcess iframe (Copy & Pay)
+3. Axcess processes payment
+4. Checkout/store → assigns tickets to user, creates Payment record
+5. Emails sent (confirmation, receipt)
+
+**Payment Providers** (for ticket purchases):
+- **Axcess** - Primary (card payments via iframe)
+- **PayPal** - Backup alternative payment method
+
+**Payout Providers** (for host withdrawals):
+- **Revolut** - Automated payouts via Revolut Business API
+- **Manual** - Email-based bank transfer requests
+
+**Payment Provider Selection:**
+- User chooses on checkout page
+- Different flow per provider (iframe vs redirect)
+- All stored in `payments` table with `provider` column
+
+### 4. Competition Lifecycle
+
+```
+unpublished → active → awaiting_draw → completed
+```
+
+**States:**
+- `unpublished`: Created, not yet live
+- `active`: Live, accepting entries
+- `awaiting_draw`: Closed, needs winner selection
+- `completed`: Winner drawn and finalized
+
+## Coding Standards
+
+### General Guidelines
+
+1. **Always use type hints** (PHP 8.2+)
+   ```php
+   public function store(EntryRequest $request): RedirectResponse
+   ```
+
+2. **Use Laravel conventions**
+   - Route names: `competitions.show`, `account.tickets.live`
+   - Controller methods: index, create, store, show, edit, update, destroy
+   - Variable naming: camelCase for variables, StudlyCase for classes
+
+3. **Follow PSR-12 coding standard**
+   - Run `./vendor/bin/pint` before committing
+   - Code is auto-formatted with Laravel Pint
+
+4. **Use Form Requests for validation**
+   - All validation in `app/Http/Requests/`
+   - Never validate in controllers directly (except simple cases)
+
+5. **Service injection over facades**
+   ```php
+   // Prefer:
+   public function __construct(CheckoutService $checkoutService)
+   
+   // Over:
+   use Illuminate\Support\Facades\Cache;
+   ```
+
+### Patterns to FOLLOW
+
+1. **Use Eloquent relationships**
+   ```php
+   $competition->tickets()->where('user_id', auth()->id())->get();
+   ```
+
+2. **Use Query Builder select() for large datasets**
+   ```php
+   User::select(['id', 'name'])->get(); // Not get() then pluck
+   ```
+
+3. **Use Events for side effects**
+   ```php
+   event(new CompetitionDrawn($competition, $winner));
+   // Listener handles emails, notifications, webhooks
+   ```
+
+4. **Use Jobs for async tasks**
+   ```php
+   SendWelcomeEmail::dispatch($user);
+   ```
+
+5. **Use config() for all configuration**
+   ```php
+   config('axcess.api_key')
+   config('app.jwt_secret')
+   ```
+
+### Patterns to AVOID
+
+1. **Never use superglobals**
+   ```php
+   // NO:  if ($_POST['type'] === 'paypal')
+   // YES: if ($request->input('type') === 'paypal')
+   ```
+
+2. **Never use dd() or exit() in committed code**
+   ```php
+   // NO:  dd($data);
+   // YES: \Log::error('Debug data', $data); throw new \Exception();
+   ```
+
+3. **Never hardcode credentials**
+   ```php
+   // NO:  'password' => 'Testing123!'
+   // YES: 'password' => config('services.api.password')
+   ```
+
+4. **Avoid N+1 queries**
+   ```php
+   // Use eager loading:
+   Competition::with(['prizes', 'user', 'brand'])->get();
+   ```
+
+5. **Don't bypass validation**
+   ```php
+   // Always validate user input via Form Requests
+   ```
+
+## Testing
+
+### Test Structure
+
+- **Unit tests**: `tests/Unit/` - Models, services, helpers
+- **Feature tests**: `tests/Feature/` - HTTP requests, workflows
+- Run tests: `php artisan test`
+- Coverage: Aim for 60%+ on critical paths
+
+### Test Guidelines
+
+1. Use Database transactions or RefreshDatabase trait
+2. Use factories for model creation
+3. Test happy path AND edge cases
+4. Mock external services (Axcess, PayPal, Revolut)
+5. Test authorization (policies)
+
+## Database Conventions
+
+### Naming
+- Tables: plural snake_case (`competitions`, `access_links`)
+- Foreign keys: `{model}_id` (`competition_id`, `user_id`)
+- Pivot tables: alphabetical order (`competition_free_ticket`)
+- JSON columns: singular (`axcess`, not `axcess_data`)
+
+### Key Tables
+- `competitions` - Raffles/competitions
+- `tickets` - Individual ticket entries
+- `checkouts` - Temporary purchase sessions
+- `users` - Both hosts and entrants
+- `prizes` - Competition prizes
+- `access_links` - Direct purchase links
+- `payments` - Completed payment records
+- `discounts` - Promotional discounts
+
+## Important Business Logic
+
+### Ticket Assignment
+- Tickets pre-created per competition
+- Assignment is atomic (uses `lockForUpdate()`)
+- Expired checkout tickets released back to pool
+- Free tickets handled via `CompetitionFreeTicket` model
+
+### Checkout Expiry
+- Default: 15 minutes from creation
+- Timer shown to user
+- Expired checkouts release tickets
+- Background job cleans up expired checkouts
+
+### Drawing Logic
+- Scheduled command runs every 15 minutes
+- Checks competitions with `draw_at` <= now
+- Random selection from eligible tickets
+- Fires `CompetitionDrawn` event
+- Multiple prize tiers drawn if configured
+
+### Commission Calculations
+- Default: 10% (configurable per user)
+- Calculated on ticket sales
+- Access link commission separate
+- Tracked in `balance_transactions` table
+
+### Access Link Flow
+1. Create AccessLink for prize
+2. Send link to customer
+3. Customer pays within expiry window
+4. Payment processed → prize marked as paid
+5. Host ships prize → marks as shipped
+
+## Development Workflow
+
+1. **Branch strategy**: Feature branches from `main`
+2. **Code formatting**: Run Pint before committing
+3. **Migrations**: Never edit existing migrations, create new ones
+4. **Environment**: Use `.env` for all config, never commit `.env`
+5. **Queue**: Use `php artisan horizon` locally for job processing
+
+## Common Gotchas
+
+1. **Custom domain routing**: Use `customDomainRoute()` helper for links
+2. **Guards**: Use `getGuard()` helper (supports both admin and user)
+3. **Timezone handling**: Always consider user timezone from LocationService
+4. **Soft deletes**: Many models use SoftDeletes (Discount, etc)
+5. **Slugs**: Competition slugs auto-generated from title (HasSlug trait)
+
+## External Integrations
+
+**Payment Processing:**
+- **Axcess**: Primary payment provider (card payments via iframe)
+- **PayPal**: Backup payment provider (redirect flow)
+
+**Payout Processing:**
+- **Revolut Business**: Automated payouts to hosts (webhook-based)
+
+**Infrastructure:**
+- **Postmark**: Transactional emails
+- **Mailchimp/MailerLite**: Newsletter management
+- **Twilio**: SMS verification for hosts
+- **AWS S3**: Image storage and CDN
+- **Sentry**: Error tracking and monitoring
+- **Spatie Sitemap**: SEO sitemap generation
+
+## File Upload Handling
+
+- Use Intervention Image for resizing
+- Store in S3 (via `cdnAsset()` helper)
+- Optimize with Spatie Image Optimizer
+- Support: jpg, png, webp
+
+## When Adding Features
+
+1. Create migration for DB changes
+2. Create/update model with relationships
+3. Create Form Request for validation
+4. Create Service for business logic
+5. Create Controller method (thin)
+6. Create routes
+7. Create views
+8. Add tests
+9. Update documentation if architectural change
+
+## Emergency Debugging
+
+- **Logs**: `storage/logs/laravel.log`
+- **Horizon**: Monitor failed jobs at `/horizon`
+- **Telescope**: Debug requests at `/telescope`
+- **Tinker**: `php artisan tinker` for REPL
+
+---
+
+When working on this codebase, prioritize:
+1. Type safety (strict types, type hints)
+2. Security (validate all input, authorize all actions)
+3. Performance (eager loading, query optimization)
+4. Maintainability (DRY, clear naming, comments for complex logic)
+

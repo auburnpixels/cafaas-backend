@@ -1,0 +1,419 @@
+@tailwind base;
+@tailwind components;
+
+[v-cloak] {
+    display: none;
+}
+
+.container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8
+}
+
+.input {
+    @apply block w-full shadow-sm focus:ring-0 text-sm border-gray-300 focus:border-gray-300 rounded-md;
+    @apply md:text-sm !important;
+}
+
+.input.input-error {
+    @apply border-red-500;
+}
+
+.input-error {
+    @apply border-red-500 !important;
+}
+
+.input-error .vs__dropdown-toggle,
+.input-error .dp__input{
+    @apply border-red-500 !important;
+}
+
+.input-readonly {
+    @apply pointer-events-none opacity-50 cursor-not-allowed;
+}
+
+.input-append {
+    @apply rounded-tl-md rounded-bl-md shadow-sm focus:ring-0 text-sm border-l border-t border-b border-gray-300 py-[12px] px-[8px] flex items-center justify-center max-h-[38px];
+}
+
+.input-prepend {
+    @apply rounded-tr-md rounded-br-md shadow-sm focus:ring-0 text-sm border-r border-t border-b border-gray-300 py-[12px] px-[8px] flex items-center justify-center max-h-[38px];
+}
+
+.label {
+    @apply block text-sm font-medium text-gray-700 sm:mt-px;
+}
+
+.label-help-text {
+    @apply text-xs mt-1 font-medium text-gray-700;
+}
+
+.boolean-icon-green {
+    @apply h-5 w-5 text-green-500;
+}
+
+.boolean-icon-yellow {
+    @apply h-5 w-5 text-yellow-500;
+}
+
+.boolean-icon-red {
+    @apply h-5 w-5 text-red-500;
+}
+
+.dp__pointer.dp__input {
+    @apply block w-full shadow-sm focus:ring-0 text-sm border-gray-300 focus:border-gray-300 rounded-md font-sans;
+    @apply md:text-sm !important;
+    padding-top: 0.5rem !important;
+    padding-right: 0.75rem !important;
+    padding-bottom: 0.5rem !important;
+    padding-left: 0.75rem !important;
+}
+
+.dp__cell_inner,
+.dp__calendar_header_item,
+.dp__instance_calendar,
+.dp__selection_preview,
+.dp__action.dp__cancel,
+.dp__action.dp__select,
+.dp__time_display,
+.dp__pointer.dp__input.dp__input_focus,
+.dp__pointer.dp__input {
+    @apply font-sans;
+}
+
+/*
+------------------------------------------------------------
+    Light
+------------------------------------------------------------
+*/
+
+/* (Gotham-Thin)              weight: 100         style: normal */
+@font-face {
+    font-family: 'Gotham';
+    src: url('../fonts/gotham/Gotham-Thin.eot');
+    src: local('Gotham-Thin'),
+    url('../fonts/gotham/Gotham-Thin.eot?#iefix') format('embedded-opentype'),
+    url('../fonts/gotham/Gotham-Thin.woff2') format('woff2'),
+    url('../fonts/gotham/Gotham-Thin.woff') format('woff'),
+    url('../fonts/gotham/Gotham-Thin.ttf') format('truetype'),
+    url('../fonts/gotham/Gotham-Thin.svg#Gotham-Thin') format('svg');
+    font-weight: 100;
+    font-style: normal;
+    font-display: block;
+}
+
+/* (Gotham-Thin Italic)       weight: 100,        style: italic */
+@font-face {
+    font-family: 'Gotham';
+    src: url('../fonts/gotham/Gotham-ThinItalic.eot');
+    src: local('Gotham-ThinItalic'),
+    url('../fonts/gotham/Gotham-ThinItalic.eot?#iefix') format('embedded-opentype'),
+    url('../fonts/gotham/Gotham-ThinItalic.woff2') format('woff2'),
+    url('../fonts/gotham/Gotham-ThinItalic.woff') format('woff'),
+    url('../fonts/gotham/Gotham-ThinItalic.ttf') format('truetype'),
+    url('../fonts/gotham/Gotham-ThinItalic.svg#Gotham-ThinItalic') format('svg');
+    font-weight: 100;
+    font-style: italic;
+    font-display: block;
+}
+
+/* (Gotham-Light)             weight: 300,        style: normal */
+@font-face {
+    font-family: 'Gotham';
+    src: url('../fonts/gotham/Gotham-Light.eot');
+    src: local('Gotham-Light'),
+    url('../fonts/gotham/Gotham-Light.eot?#iefix') format('embedded-opentype'),
+    url('../fonts/gotham/Gotham-Light.woff2') format('woff2'),
+    url('../fonts/gotham/Gotham-Light.woff') format('woff'),
+    url('../fonts/gotham/Gotham-Light.ttf') format('truetype'),
+    url('../fonts/gotham/Gotham-Light.svg#Gotham-Light') format('svg');
+    font-weight: 300;
+    font-style: normal;
+    font-display: block;
+}
+
+/* (Gotham-Light Italic)      weight: 300         style: italic */
+@font-face {
+    font-family: 'Gotham';
+    src: url('../fonts/gotham/Gotham-LightItalic.eot');
+    src: local('Gotham-LightItalic'),
+    url('../fonts/gotham/Gotham-LightItalic.eot?#iefix') format('embedded-opentype'),
+    url('../fonts/gotham/Gotham-LightItalic.woff2') format('woff2'),
+    url('../fonts/gotham/Gotham-LightItalic.woff') format('woff'),
+    url('../fonts/gotham/Gotham-LightItalic.ttf') format('truetype'),
+    url('../fonts/gotham/Gotham-LightItalic.svg#Gotham-LightItalic') format('svg');
+    font-weight: 300;
+    font-style: italic;
+    font-display: block;
+}
+
+
+/*
+------------------------------------------------------------
+    Normal
+------------------------------------------------------------
+*/
+
+/* (Gotham-Book)              weight: normal,   style: normal */
+@font-face {
+    font-family: 'Gotham';
+    src: url('../fonts/gotham/Gotham-Book.eot');
+    src: local('Gotham-Book'),
+    url('../fonts/gotham/Gotham-Book.eot?#iefix') format('embedded-opentype'),
+    url('../fonts/gotham/Gotham-Book.woff2') format('woff2'),
+    url('../fonts/gotham/Gotham-Book.woff') format('woff'),
+    url('../fonts/gotham/Gotham-Book.ttf') format('truetype'),
+    url('../fonts/gotham/Gotham-Book.svg#Gotham-Book') format('svg');
+    font-weight: normal;
+    font-style: normal;
+    font-display: block;
+}
+
+/* (Gotham-Book)              weight: normal,   style: italic */
+@font-face {
+    font-family: 'Gotham';
+    src: url('../fonts/gotham/Gotham-BookItalic.eot');
+    src: local('Gotham-BookItalic'),
+    url('../fonts/gotham/Gotham-BookItalic.eot?#iefix') format('embedded-opentype'),
+    url('../fonts/gotham/Gotham-BookItalic.woff2') format('woff2'),
+    url('../fonts/gotham/Gotham-BookItalic.woff') format('woff'),
+    url('../fonts/gotham/Gotham-BookItalic.ttf') format('truetype'),
+    url('../fonts/gotham/Gotham-BookItalic.svg#Gotham-BookItalic') format('svg');
+    font-weight: normal;
+    font-style: italic;
+    font-display: block;
+}
+
+
+/*
+------------------------------------------------------------
+    Bold
+------------------------------------------------------------
+*/
+
+/* (Gotham-Bold)              weight: bold      style: normal */
+@font-face {
+    font-family: 'Gotham';
+    src: url('../fonts/gotham/Gotham-Bold.eot');
+    src: local('Gotham-Bold'),
+    url('../fonts/gotham/Gotham-Bold.eot?#iefix') format('embedded-opentype'),
+    url('../fonts/gotham/Gotham-Bold.woff2') format('woff2'),
+    url('../fonts/gotham/Gotham-Bold.woff') format('woff'),
+    url('../fonts/gotham/Gotham-Bold.ttf') format('truetype'),
+    url('../fonts/gotham/Gotham-Bold.svg#Gotham-Bold') format('svg');
+    font-weight: bold;
+    font-style: normal;
+    font-display: block;
+}
+
+/* (Gotham-Bold Italic)       weight: bold      style: italic */
+@font-face {
+    font-family: 'Gotham';
+    src: url('../fonts/gotham/Gotham-BoldItalic.eot');
+    src: local('Gotham-BoldItalic'),
+    url('../fonts/gotham/Gotham-BoldItalic.eot?#iefix') format('embedded-opentype'),
+    url('../fonts/gotham/Gotham-BoldItalic.woff2') format('woff2'),
+    url('../fonts/gotham/Gotham-BoldItalic.woff') format('woff'),
+    url('../fonts/gotham/Gotham-BoldItalic.ttf') format('truetype'),
+    url('../fonts/gotham/Gotham-BoldItalic.svg#Gotham-BoldItalic') format('svg');
+    font-weight: bold;
+    font-style: italic;
+    font-display: block;
+}
+
+.swiper-pagination-bullet {
+    @apply bg-white !important;
+}
+
+.swiper {
+    width: 100%;
+    height: 100%;
+}
+
+.swiper-slide {
+    text-align: center;
+    font-size: 18px;
+    background: #fff;
+
+    /* Center slide text vertically */
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-box-pack: center;
+    -ms-flex-pack: center;
+    -webkit-justify-content: center;
+    justify-content: center;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    -webkit-align-items: center;
+    align-items: center;
+}
+
+.swiper-slide img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#competition-description ul,
+#competition-description ol {
+    padding-left: 1.5em;
+}
+
+.rich-text ul,
+.rich-text ol {
+    padding-left: 1.1em;
+}
+
+#competition-description ul,
+.rich-text ul {
+    @apply list-disc
+}
+
+#competition-description ol,
+.rich-text ol {
+    @apply list-decimal
+}
+
+.ql-editor {
+    @apply font-sans;
+}
+
+.ql-editor ol,
+.ql-editor ul {
+    padding-left: 15px !important;
+}
+
+.ql-editor ul {
+    @apply list-disc
+}
+
+.ql-editor ol {
+    @apply list-decimal
+}
+
+.ql-editor ol li,
+.ql-editor ul li {
+    padding-left: 0 !important;
+    list-style-type: unset !important;
+}
+
+.ql-editor ol li:before,
+.ql-editor ul li:before {
+    content: none !important;
+}
+
+.ql-toolbar {
+    @apply rounded-tr-lg rounded-tl-lg;
+}
+
+.ql-container {
+    @apply rounded-br-lg rounded-bl-lg;
+}
+
+.ql-picker-options,
+.ql-picker-label {
+    @apply font-sans !important;
+}
+
+.rich-text p {
+ @apply text-base;
+}
+
+.rich-text h2 {
+    @apply text-3xl
+}
+
+.rich-text h3 {
+    @apply text-2xl
+}
+
+.admin-button-base {
+    @apply cursor-pointer inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium;
+}
+
+ /**
+ Vue Select
+ */
+.v-select {
+    @apply block w-full shadow-sm sm:text-sm border-gray-300 focus:border-gray-300 rounded-lg;
+}
+
+.vs__dropdown-toggle {
+    @apply text-sm !important;
+    padding-top: 0.5rem !important;
+    padding-right: 0.75rem !important;
+    padding-bottom: 0.5rem !important;
+    padding-left: 0.75rem !important;
+}
+
+.vs__dropdown-option {
+    @apply text-sm md:text-sm !important;
+}
+
+.vs__selected {
+    margin: 0 !important;
+    padding: 0 !important;
+    @apply text-sm md:text-sm !important;
+}
+
+.vs__selected .vs__deselect {
+    @apply ml-1 !important;
+}
+
+.vs__selected-options {
+    @apply gap-2 !important;
+}
+
+.vs--multiple .vs__selected {
+    @apply px-1 bg-white !important;
+}
+
+.vs__search {
+    padding-left: 0px !important;
+    margin-top: 0px !important;
+}
+
+.spinner {
+    animation: rotate 2s linear infinite;
+    z-index: 2;
+    top: 50%;
+    left: 50%;
+    margin: -25px 0 0 -25px;
+    width: 50px;
+    height: 50px;
+}
+
+.vc-color-wrap {
+    @apply h-8 w-8 !important;
+}
+
+.ql-video {
+    width: 100%;
+    height: 330px;
+}
+
+@keyframes rotate {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes dash {
+    0% {
+        stroke-dasharray: 1, 150;
+        stroke-dashoffset: 0;
+    }
+    50% {
+        stroke-dasharray: 90, 150;
+        stroke-dashoffset: -35;
+    }
+    100% {
+        stroke-dasharray: 90, 150;
+        stroke-dashoffset: -124;
+    }
+}
+
+
+@tailwind utilities;

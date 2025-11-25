@@ -1,0 +1,317 @@
+openapi: 3.0.3
+info:
+  title: Raffaly Transparency API
+  description: Public API for raffle transparency, audit records, and entry statistics
+  version: 1.0.0
+  contact:
+    email: support@raffaly.com
+    name: Raffaly Support
+  license:
+    name: Proprietary
+servers:
+  - url: https://raffaly.com/api/v1
+    description: Production server
+  - url: https://sandbox.api.raffaly.com/api/v1
+    description: Sandbox server
+
+paths:
+  /raffles/{raffle_uuid}/audit:
+    get:
+      summary: Get audit records
+      description: Retrieve all tamper-proof audit records for a raffle's draws, including multiple prizes
+      operationId: getAuditRecords
+      tags:
+        - Audits
+      parameters:
+        - name: raffle_uuid
+          in: path
+          required: true
+          description: Raffle UUID
+          schema:
+            type: string
+            format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+      responses:
+        '200':
+          description: Successful response
+          headers:
+            ETag:
+              description: MD5 hash for caching
+              schema:
+                type: string
+            X-API-Version:
+              description: API version
+              schema:
+                type: string
+                example: v1
+            X-Request-Id:
+              description: Request tracing ID
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditRecords'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /raffles/{raffle_uuid}/entries/stats:
+    get:
+      summary: Get entry statistics
+      description: Get current entry statistics for a raffle
+      operationId: getEntryStats
+      tags:
+        - Entries
+      parameters:
+        - name: raffle_uuid
+          in: path
+          required: true
+          description: Raffle UUID
+          schema:
+            type: string
+            format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryStats'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /raffles/{raffle_uuid}/odds:
+    get:
+      summary: Calculate odds
+      description: Calculate winning probability for a given number of entries
+      operationId: calculateOdds
+      tags:
+        - Odds
+      parameters:
+        - name: raffle_uuid
+          in: path
+          required: true
+          description: Raffle UUID
+          schema:
+            type: string
+            format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+        - name: entries
+          in: query
+          required: true
+          description: Number of entries to calculate odds for
+          schema:
+            type: integer
+            minimum: 1
+          example: 9
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OddsCalculation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+components:
+  schemas:
+    AuditRecords:
+      type: object
+      properties:
+        raffle_id:
+          type: string
+          format: uuid
+          description: Raffle identifier
+        total_draws:
+          type: integer
+          description: Total number of draws/prizes
+        draws:
+          type: array
+          description: Array of all draw audit records
+          items:
+            $ref: '#/components/schemas/DrawAudit'
+      example:
+        raffle_id: 550e8400-e29b-41d4-a716-446655440000
+        total_draws: 3
+        draws:
+          - draw_id: 660e8400-e29b-41d4-a716-446655440001
+            prize_name: "iPhone 15 Pro (1st Prize)"
+            drawn_at_utc: "2025-11-06T20:32:01+00:00"
+            total_entries: 142
+            rng_seed_hash: "a1b2c3d4e5f6..."
+            winner_entry_id: "12345"
+            signature_hash: "d4e5f6a7b8c9..."
+            previous_signature_hash: null
+          - draw_id: 770e8400-e29b-41d4-a716-446655440002
+            prize_name: "AirPods Pro (2nd Prize)"
+            drawn_at_utc: "2025-11-06T20:32:05+00:00"
+            total_entries: 141
+            rng_seed_hash: "b2c3d4e5f6a7..."
+            winner_entry_id: "67890"
+            signature_hash: "e5f6a7b8c9d0..."
+            previous_signature_hash: "d4e5f6a7b8c9..."
+          - draw_id: 880e8400-e29b-41d4-a716-446655440003
+            prize_name: "Apple Watch (3rd Prize)"
+            drawn_at_utc: "2025-11-06T20:32:09+00:00"
+            total_entries: 140
+            rng_seed_hash: "c3d4e5f6a7b8..."
+            winner_entry_id: "54321"
+            signature_hash: "f6a7b8c9d0e1..."
+            previous_signature_hash: "e5f6a7b8c9d0..."
+
+    DrawAudit:
+      type: object
+      properties:
+        draw_id:
+          type: string
+          format: uuid
+          description: Draw identifier
+        prize_name:
+          type: string
+          description: Name of the prize won
+        drawn_at_utc:
+          type: string
+          format: date-time
+          description: Draw timestamp in UTC
+        total_entries:
+          type: integer
+          description: Total number of entries in the draw
+        rng_seed_hash:
+          type: string
+          description: Hash of the RNG seed or entry pool
+        winner_entry_id:
+          type: string
+          description: Winning entry/ticket number
+        signature_hash:
+          type: string
+          description: Cryptographic signature for verification
+        previous_signature_hash:
+          type: string
+          nullable: true
+          description: Signature hash of the previous draw in the chain (null for first draw)
+
+    EntryStats:
+      type: object
+      properties:
+        raffle_id:
+          type: string
+          format: uuid
+        total_entries:
+          type: integer
+        paid_entries:
+          type: integer
+        free_entries:
+          type: integer
+        max_entries:
+          type: integer
+        updated_at:
+          type: string
+          format: date-time
+      example:
+        raffle_id: 550e8400-e29b-41d4-a716-446655440000
+        total_entries: 142
+        paid_entries: 131
+        free_entries: 11
+        max_entries: 10000
+        updated_at: "2025-11-06T20:31:55+00:00"
+
+    OddsCalculation:
+      type: object
+      properties:
+        raffle_id:
+          type: string
+          format: uuid
+        entrant_entries:
+          type: integer
+        total_entries:
+          type: integer
+        ratio:
+          type: string
+        probability:
+          type: number
+          format: double
+        as_of:
+          type: string
+          format: date-time
+      example:
+        raffle_id: 550e8400-e29b-41d4-a716-446655440000
+        entrant_entries: 9
+        total_entries: 142
+        ratio: "9 in 142"
+        probability: 0.063380
+        as_of: "2025-11-06T20:31:55+00:00"
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              enum: [NOT_FOUND, RATE_LIMITED, INVALID_PARAMETER, SERVER_ERROR, UNAUTHORIZED, FORBIDDEN]
+            message:
+              type: string
+            request_id:
+              type: string
+
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: NOT_FOUND
+              message: Resource not found
+              request_id: req_abc123
+
+    RateLimited:
+      description: Rate limit exceeded
+      headers:
+        Retry-After:
+          description: Seconds until rate limit resets
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: RATE_LIMITED
+              message: Too many requests. Please try again later.
+              request_id: req_abc123
+
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: INVALID_PARAMETER
+              message: Invalid parameter provided
+              request_id: req_abc123
+
+tags:
+  - name: Audits
+    description: Tamper-proof audit records
+  - name: Entries
+    description: Entry statistics and counts
+  - name: Odds
+    description: Probability calculations
+

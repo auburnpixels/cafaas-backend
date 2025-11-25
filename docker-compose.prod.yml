@@ -1,0 +1,39 @@
+version: '3.7'
+
+services:
+
+  # PHP/Nginx Service
+  app:
+    restart: always
+    ports:
+      - "81:8080"
+    volumes:
+      - /var/www/storage
+    env_file:
+      - .env
+
+  # PostgreSQL Service
+  database:
+    ports:
+      - "54322:5432"
+    environment:
+      PGPASSWORD: '${DB_PASSWORD:-secret}'
+      POSTGRES_DB: '${DB_DATABASE}'
+      POSTGRES_USER: '${DB_USERNAME}'
+      POSTGRES_PASSWORD: '${DB_PASSWORD:-secret}'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  # Redis
+  redis:
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis-data:/data
+
+# Volumes
+volumes:
+  db-data:
+    driver: local
+  redis-data:
+    driver: local

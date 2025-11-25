@@ -1,0 +1,1232 @@
+openapi: 3.0.3
+info:
+  title: CAAS Operator API
+  version: 1.0.0
+  description: >
+    Operator-facing API for managing competitions, entries, draws, complaints, and
+    outbound webhooks. All endpoints live under `/api/v1/operator` and require a valid
+    API key supplied through the `X-Api-Key` header.
+servers:
+  - url: https://api.caas.dev
+security:
+  - ApiKeyAuth: []
+tags:
+  - name: Competitions
+    description: Manage competitions, prizes, stats, and audits.
+  - name: Entries
+    description: Submit and manage paid or free entries.
+  - name: Draws
+    description: Operate random draws and inspect draw history.
+  - name: Compliance
+    description: Submit complaints for regulatory tracking.
+  - name: Webhooks
+    description: Manage outbound webhook subscriptions.
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+  schemas:
+    ApiError:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Optional machine-readable context (e.g. field level errors).
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          $ref: '#/components/schemas/ApiError'
+    ValidationErrorResponse:
+      type: object
+      required:
+        - message
+        - errors
+      properties:
+        message:
+          type: string
+          example: The given data was invalid.
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: Field-level validation failures keyed by attribute.
+    CompetitionStatus:
+      type: string
+      enum:
+        - unpublished
+        - active
+        - awaiting_draw
+        - completed
+    PrizeDrawInfo:
+      type: object
+      properties:
+        has_been_drawn:
+          type: boolean
+        order:
+          type: integer
+          description: Draw order for this prize (1 = first prize drawn).
+        drawn_at:
+          type: string
+          format: date-time
+          nullable: true
+    WinnerEntryRef:
+      type: object
+      properties:
+        entry:
+          type: object
+          properties:
+            external_id:
+              type: string
+              nullable: true
+    Prize:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        external_id:
+          type: string
+        title:
+          type: string
+        winner:
+          $ref: '#/components/schemas/WinnerEntryRef'
+        draw:
+          $ref: '#/components/schemas/PrizeDrawInfo'
+    CompetitionStatistics:
+      type: object
+      properties:
+        total_entries:
+          type: integer
+        paid_entries:
+          type: integer
+        free_entries:
+          type: integer
+        draws_completed:
+          type: integer
+    Competition:
+      type: object
+      required:
+        - id
+        - name
+        - status
+        - external_id
+        - max_tickets
+        - draw_at
+        - created_at
+        - prizes
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        status:
+          $ref: '#/components/schemas/CompetitionStatus'
+        external_id:
+          type: string
+        max_tickets:
+          type: integer
+        draw_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        prizes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Prize'
+        statistics:
+          allOf:
+            - $ref: '#/components/schemas/CompetitionStatistics'
+          nullable: true
+    CompetitionCreatePrize:
+      type: object
+      required:
+        - external_id
+        - title
+      properties:
+        external_id:
+          type: string
+          description: Unique prize identifier within the competition.
+        title:
+          type: string
+          description: Public title of the prize.
+    CompetitionCreateRequest:
+      type: object
+      required:
+        - external_id
+        - name
+        - max_tickets
+        - draw_at
+        - prizes
+      properties:
+        external_id:
+          type: string
+          description: Operator-supplied unique identifier (e.g. `comp_123`).
+        name:
+          type: string
+          description: Public name/title of the competition.
+        max_tickets:
+          type: integer
+          description: Total available tickets.
+        draw_at:
+          type: string
+          format: date-time
+          description: Scheduled draw time (ISO 8601).
+        status:
+          type: string
+          enum:
+            - unpublished
+            - active
+          description: Optional initial status. Defaults to `unpublished`.
+        prizes:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/CompetitionCreatePrize'
+    CompetitionUpdatePrize:
+      type: object
+      required:
+        - external_id
+        - title
+      properties:
+        external_id:
+          type: string
+          description: Prize identifier (must be unique within the competition).
+        title:
+          type: string
+          description: Updated prize title.
+    CompetitionUpdateRequest:
+      type: object
+      properties:
+        external_id:
+          type: string
+          description: Updated operator identifier.
+        name:
+          type: string
+          description: Updated public name/title.
+        max_tickets:
+          type: integer
+          description: Updated total ticket quantity.
+        draw_at:
+          type: string
+          format: date-time
+          description: Rescheduled draw time.
+        status:
+          $ref: '#/components/schemas/CompetitionStatus'
+        prizes:
+          type: array
+          description: Add/update/delete prizes. Only allowed while status is `unpublished` or `active`.
+          items:
+            $ref: '#/components/schemas/CompetitionUpdatePrize'
+    CompetitionRef:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        external_id:
+          type: string
+    Entry:
+      type: object
+      required:
+        - id
+        - external_id
+        - ticket_number
+        - is_free
+        - is_eligible
+        - created_at
+        - competition
+      properties:
+        id:
+          type: string
+          format: uuid
+        external_id:
+          type: string
+        ticket_number:
+          type: integer
+        is_free:
+          type: boolean
+        user_reference:
+          type: string
+          nullable: true
+        is_eligible:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        competition:
+          $ref: '#/components/schemas/CompetitionRef'
+    PaidEntryRequest:
+      type: object
+      required:
+        - external_id
+        - question_answered_correctly
+      properties:
+        external_id:
+          type: string
+          description: Operator transaction/entry identifier.
+        user_reference:
+          type: string
+          description: Optional user reference (hash or pseudonym recommended).
+        question_answered_correctly:
+          type: boolean
+          description: Indicates eligibility for the draw.
+    FreeEntryRequest:
+      type: object
+      required:
+        - external_id
+        - user_reference
+        - question_answered_correctly
+      properties:
+        external_id:
+          type: string
+          description: Operator transaction/entry identifier.
+        user_reference:
+          type: string
+          description: Identifier for the entrant.
+        reason:
+          type: string
+          enum:
+            - postal
+            - promotional
+            - compensation
+          description: Why the free entry was granted. Defaults to `postal` if omitted.
+        question_answered_correctly:
+          type: boolean
+          description: Indicates eligibility for the draw.
+    VoidEntryRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          enum:
+            - refund
+            - cancellation
+            - duplicate
+            - fraud
+            - other
+        notes:
+          type: string
+          maxLength: 500
+          description: Optional free-form context shown in audit trails.
+    VoidEntryResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Entry deleted successfully.
+        reason:
+          type: string
+          example: refund
+        competition:
+          $ref: '#/components/schemas/CompetitionRef'
+        entry:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            external_id:
+              type: string
+    RunDrawRequest:
+      type: object
+      properties:
+        prize_id:
+          type: string
+          description: Optional prize external ID. When omitted all remaining prizes are drawn.
+    DrawWinnerEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          nullable: true
+        external_id:
+          type: string
+          nullable: true
+        number:
+          type: integer
+          nullable: true
+    DrawPrizeSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        external_id:
+          type: string
+        title:
+          type: string
+    DrawResult:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+        drawn_at:
+          type: string
+          format: date-time
+        total_entries:
+          type: integer
+        signature_hash:
+          type: string
+        prize:
+          $ref: '#/components/schemas/DrawPrizeSummary'
+        winner:
+          type: object
+          properties:
+            entry:
+              $ref: '#/components/schemas/DrawWinnerEntry'
+    DrawsRunResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        competition_id:
+          type: string
+          format: uuid
+        competition_external_id:
+          type: string
+        total_prizes_drawn:
+          type: integer
+        draws:
+          type: array
+          items:
+            $ref: '#/components/schemas/DrawResult'
+        audit_url:
+          type: string
+          format: uri
+    DrawAudit:
+      type: object
+      properties:
+        draw_id:
+          type: string
+        total_entries:
+          type: integer
+        winner_entry_id:
+          type: string
+        rng_seed_hash:
+          type: string
+        signature_hash:
+          type: string
+        previous_signature_hash:
+          type: string
+          nullable: true
+        drawn_at:
+          type: string
+          format: date-time
+    CompetitionAuditsResponse:
+      type: object
+      properties:
+        competition_id:
+          type: string
+        total_draws:
+          type: integer
+        audits:
+          type: array
+          items:
+            $ref: '#/components/schemas/DrawAudit'
+    DrawEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+        sequence:
+          type: integer
+        event_type:
+          type: string
+        event_payload:
+          type: object
+          nullable: true
+          additionalProperties: true
+        event_hash:
+          type: string
+        previous_event_hash:
+          type: string
+          nullable: true
+        actor_type:
+          type: string
+        actor_id:
+          type: string
+        ip_address:
+          type: string
+          nullable: true
+          description: IPv4 or IPv6 address recorded for the event origin.
+        created_at:
+          type: string
+          format: date-time
+        competition:
+          type: object
+          nullable: true
+          properties:
+            uuid:
+              type: string
+              format: uuid
+            title:
+              type: string
+            external_id:
+              type: string
+    DrawEventListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/DrawEvent'
+    ComplaintRequest:
+      type: object
+      required:
+        - competition_external_id
+        - complainant_reference
+        - category
+        - description
+      properties:
+        competition_external_id:
+          type: string
+        complainant_reference:
+          type: string
+        category:
+          type: string
+          enum:
+            - draw_fairness
+            - entry_issue
+            - prize_issue
+            - payment_issue
+            - other
+        description:
+          type: string
+          maxLength: 2000
+    Complaint:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        competition_external_id:
+          type: string
+          nullable: true
+        category:
+          type: string
+        status:
+          type: string
+          description: Complaint workflow status (defaults to `pending`).
+        created_at:
+          type: string
+          format: date-time
+    WebhookEventType:
+      type: string
+      enum:
+        - draw.completed
+        - audit.published
+        - raffle.created
+        - raffle.published
+        - entry.created
+        - complaint.submitted
+    WebhookSubscription:
+      type: object
+      properties:
+        id:
+          type: integer
+        url:
+          type: string
+          format: uri
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/WebhookEventType'
+        is_active:
+          type: boolean
+        failure_count:
+          type: integer
+        secret:
+          type: string
+          nullable: true
+          description: Returned only when a subscription is first created.
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+    WebhookCreateRequest:
+      type: object
+      required:
+        - url
+        - events
+      properties:
+        url:
+          type: string
+          format: uri
+          description: HTTPS endpoint that will receive signed webhook payloads.
+        events:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/WebhookEventType'
+    WebhookUpdateRequest:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+        events:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/WebhookEventType'
+        is_active:
+          type: boolean
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+  responses:
+    UnauthorizedResponse:
+      description: Missing or invalid `X-Api-Key` header.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    RateLimitedResponse:
+      description: Too many requests from this API key. Respect the `Retry-After` header before retrying.
+      headers:
+        Retry-After:
+          description: Seconds to wait before retrying.
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+paths:
+  /api/v1/operator/competitions:
+    post:
+      tags: [Competitions]
+      summary: Create competition
+      description: Create a new competition with one or more prizes.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompetitionCreateRequest'
+      responses:
+        '201':
+          description: Competition created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Competition'
+        '422':
+          description: Validation failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitedResponse'
+  /api/v1/operator/competitions/{externalId}:
+    get:
+      tags: [Competitions]
+      summary: Get competition
+      description: Retrieve full competition details and prize metadata.
+      parameters:
+        - name: externalId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Operator-supplied competition external ID.
+      responses:
+        '200':
+          description: Competition details retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Competition'
+        '404':
+          description: Competition not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitedResponse'
+    put:
+      tags: [Competitions]
+      summary: Update competition
+      description: Update competition metadata, schedule, and prizes.
+      parameters:
+        - name: externalId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Operator-supplied competition external ID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompetitionUpdateRequest'
+      responses:
+        '200':
+          description: Competition updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Competition'
+        '404':
+          description: Competition not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation failed or business rule violation.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ValidationErrorResponse'
+                  - $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitedResponse'
+  /api/v1/operator/competitions/{externalId}/publish:
+    post:
+      tags: [Competitions]
+      summary: Publish competition
+      description: Set a competition status to `active`.
+      parameters:
+        - name: externalId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Competition published successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Competition'
+        '404':
+          description: Competition not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Competition cannot be published (already active/ended/closed).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitedResponse'
+  /api/v1/operator/competitions/{externalId}/close:
+    post:
+      tags: [Competitions]
+      summary: Close competition
+      description: Close a competition so no more entries are accepted and it enters the `awaiting_draw` state.
+      parameters:
+        - name: externalId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Competition closed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Competition'
+        '404':
+          description: Competition not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Only active competitions can be closed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitedResponse'
+  /api/v1/operator/competitions/{externalId}/stats:
+    get:
+      tags: [Competitions]
+      summary: Get competition stats
+      description: Retrieve aggregate entry counts for a competition.
+      parameters:
+        - name: externalId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Statistics returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompetitionStatistics'
+        '404':
+          description: Competition not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitedResponse'
+  /api/v1/operator/competitions/{externalId}/audits:
+    get:
+      tags: [Draws]
+      summary: List draw audits
+      description: Retrieve the tamper-evident audit records for a competition's draws.
+      parameters:
+        - name: externalId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Draw audits returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompetitionAuditsResponse'
+        '404':
+          description: Competition not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitedResponse'
+  /api/v1/operator/competitions/{competitionExternalId}/entries:
+    post:
+      tags: [Entries]
+      summary: Submit paid entry
+      description: Register a paid entry for a competition.
+      parameters:
+        - name: competitionExternalId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaidEntryRequest'
+      responses:
+        '201':
+          description: Entry created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entry'
+        '404':
+          description: Competition not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Entry with this `external_id` already exists.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitedResponse'
+  /api/v1/operator/competitions/{competitionExternalId}/free-entries:
+    post:
+      tags: [Entries]
+      summary: Submit free entry
+      description: Register a free/alternative entry for a competition.
+      parameters:
+        - name: competitionExternalId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FreeEntryRequest'
+      responses:
+        '201':
+          description: Free entry created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entry'
+        '404':
+          description: Competition not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Entry with this `external_id` already exists.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitedResponse'
+  /api/v1/operator/competitions/{competitionExternalId}/entries/{entryExternalId}:
+    delete:
+      tags: [Entries]
+      summary: Void entry
+      description: Void an entry (e.g. refund) so it is no longer valid for draws.
+      parameters:
+        - name: competitionExternalId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: entryExternalId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VoidEntryRequest'
+      responses:
+        '200':
+          description: Entry voided successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoidEntryResponse'
+        '404':
+          description: Competition or entry not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Entry cannot be voided (e.g. already a winner) or payload invalid.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ValidationErrorResponse'
+                  - $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitedResponse'
+  /api/v1/operator/competitions/{competitionExternalId}/draws/run:
+    post:
+      tags: [Draws]
+      summary: Trigger draw
+      description: Trigger the draw for all remaining prizes in a competition (or a specific prize in future versions).
+      parameters:
+        - name: competitionExternalId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RunDrawRequest'
+      responses:
+        '200':
+          description: Draws completed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DrawsRunResponse'
+        '404':
+          description: Competition not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Competition is not eligible for draw or no prizes remain.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Unexpected draw execution failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitedResponse'
+  /api/v1/operator/draw-events:
+    get:
+      tags: [Draws]
+      summary: List draw events
+      description: Return the latest signed draw event records for the operator (up to 100, newest first).
+      responses:
+        '200':
+          description: Draw events returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DrawEventListResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitedResponse'
+  /api/v1/operator/complaints:
+    post:
+      tags: [Compliance]
+      summary: Submit complaint
+      description: Record a complaint against a specific competition for regulator review.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComplaintRequest'
+      responses:
+        '201':
+          description: Complaint stored successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Complaint'
+        '404':
+          description: Competition not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitedResponse'
+  /api/v1/operator/webhooks:
+    get:
+      tags: [Webhooks]
+      summary: List webhook subscriptions
+      description: Retrieve all webhook subscriptions configured for the operator.
+      responses:
+        '200':
+          description: Webhook subscriptions returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WebhookSubscription'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitedResponse'
+    post:
+      tags: [Webhooks]
+      summary: Create webhook subscription
+      description: Register a new outbound webhook endpoint.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookCreateRequest'
+      responses:
+        '201':
+          description: Webhook created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookSubscription'
+        '400':
+          description: URL failed validation (must be a valid HTTPS endpoint).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitedResponse'
+  /api/v1/operator/webhooks/{id}:
+    get:
+      tags: [Webhooks]
+      summary: Get webhook subscription
+      description: Fetch a single webhook subscription by its ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Webhook subscription returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookSubscription'
+        '404':
+          description: Webhook subscription not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitedResponse'
+    put:
+      tags: [Webhooks]
+      summary: Update webhook subscription
+      description: Update URL, events, or active status for a subscription.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookUpdateRequest'
+      responses:
+        '200':
+          description: Webhook subscription updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookSubscription'
+        '400':
+          description: URL failed validation (must be a valid HTTPS endpoint).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Webhook subscription not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitedResponse'
+    delete:
+      tags: [Webhooks]
+      summary: Delete webhook subscription
+      description: Permanently delete a webhook subscription.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Webhook subscription deleted successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '404':
+          description: Webhook subscription not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitedResponse'

@@ -1,0 +1,71 @@
+# Dependencies
+vendor/
+node_modules/
+
+# Compiled Assets
+public/css/
+public/js/
+public/mix-manifest.json
+public/hot
+
+# Storage & Cache
+storage/
+bootstrap/cache/
+.phpunit.result.cache
+
+# Published Vendor Assets
+public/vendor/
+
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+storage/logs/
+
+# Docker
+docker/
+*.dockerfile
+docker-compose*.yml
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Large Data Files
+*.json
+!composer.json
+!package.json
+!package-lock.json
+!tsconfig.json
+
+# Test Coverage
+coverage/
+.phpunit.cache
+
+# Build artifacts
+public/build/
+resources/css/*.css
+resources/js/*.js
+!resources/js/app.js
+!resources/js/bootstrap.js
+
+# Fonts (large binary files)
+public/fonts/
+resources/fonts/
+
+# CSV data files
+resources/csvs/
+
+# Revolut test data
+revolut/
+

@@ -1,0 +1,26 @@
+version: '3.7'
+
+services:
+
+  # PHP/Nginx.
+  app:
+    image: auburnpixels/the-gear-giveaway
+    networks:
+      - app-network
+
+  # PostgreSQL.
+  database:
+    image: 'postgres:13'
+    networks:
+      - app-network
+
+  # Redis.
+  redis:
+    image: "redis:alpine"
+    networks:
+      - app-network
+
+# Docker Networks
+networks:
+  app-network:
+    driver: bridge
