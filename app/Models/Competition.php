@@ -16,8 +16,6 @@ use Illuminate\Support\Str;
 final class Competition extends Model
 {
     // Status Constants
-    const STATUS_UNPUBLISHED = 'unpublished';
-
     const STATUS_ACTIVE = 'active';
 
     const STATUS_AWAITING_DRAW = 'awaiting_draw';

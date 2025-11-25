@@ -50,7 +50,7 @@ final class CompetitionController extends Controller
                 'draw_at' => $validated['draw_at'],
                 'external_id' => $validated['external_id'],
                 'ticket_quantity' => $validated['max_tickets'],
-                'status' => $validated['status'] ?? Competition::STATUS_UNPUBLISHED,
+                'status' => $validated['status'] ?? Competition::STATUS_ACTIVE,
             ]);
 
             // Create prizes
@@ -320,6 +320,15 @@ final class CompetitionController extends Controller
             ], 404);
         }
 
+        if (!in_array($competition->status, [Competition::STATUS_ACTIVE])) {
+            return response()->json([
+                'error' => [
+                    'code' => 'COMPETITION_NOT_ACTIVE',
+                    'message' => 'You are only able to edit an active competition.',
+                ],
+            ], 422);
+        }
+
         $validated = $request->validated();
 
         // Track changes for audit
@@ -354,7 +363,7 @@ final class CompetitionController extends Controller
         // Handle prize updates if provided (only allowed if status is unpublished or active)
         $prizeChanges = [];
         if (isset($validated['prizes'])) {
-            if (!in_array($competition->status, [Competition::STATUS_UNPUBLISHED, Competition::STATUS_ACTIVE])) {
+            if (!in_array($competition->status, [Competition::STATUS_ACTIVE])) {
                 return response()->json([
                     'error' => [
                         'code' => 'INVALID_STATUS_FOR_PRIZE_UPDATE',
@@ -434,22 +443,13 @@ final class CompetitionController extends Controller
             }
         }
 
-        if (empty($changes)) {
-            return response()->json([
-                'error' => [
-                    'code' => 'NO_CHANGES',
-                    'message' => 'No changes detected.',
-                ],
-            ], 422);
-        }
-
         // Update competition
         if (!empty($updateData)) {
             $competition->update($updateData);
-        }
 
-        // Log event
-        $this->drawEventService->logRaffleUpdated($competition, $changes);
+            // Log event
+            $this->drawEventService->logRaffleUpdated($competition, $changes);
+        }
 
         // Reload prizes for response
         $competition->load('prizes');
